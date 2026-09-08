@@ -15,8 +15,8 @@ body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--bg);co
 .wrap{max-width:1240px;margin:0 auto}
 header{background:var(--navy);color:#fff;border-radius:12px;padding:22px 26px;margin-bottom:18px;
   display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
-header h1{font-size:24px;font-weight:700}
-header p{font-size:13px;color:#C6D3DF;margin-top:4px}
+header h1{font-size:22px;font-weight:700;letter-spacing:.3px}
+header p{font-size:13px;color:#C6D3DF;margin-top:4px;letter-spacing:.2px}
 .ctrls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 select,button{font:inherit;font-size:13px;padding:8px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);
   background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
@@ -33,7 +33,7 @@ button:hover{background:rgba(255,255,255,.22)}
 .r1{grid-template-columns:1fr}
 .card{background:var(--card);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2px}
-.card .hint{font-size:12px;color:var(--slate);margin-bottom:14px;font-style:italic}
+.card .hint{font-size:12px;color:var(--slate);margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:9px 10px;border-bottom:2px solid var(--line);color:var(--slate);
   font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -55,12 +55,12 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 
 <header>
   <div>
-    <h1>🦺 E-Ishikawa Safety App</h1>
+    <h1>E-Ishikawa Safety App</h1>
     <p>Project Mexico — Dashboard en tiempo real, análisis Ishikawa (6M)</p>
   </div>
   <div class="ctrls">
     <select id="fRol"></select>
-    <button id="btnRefresh" onclick="cargar()">🔄 Actualizar</button>
+    <button id="btnRefresh" onclick="cargar()">Actualizar</button>
     <span class="status" id="status"></span>
   </div>
 </header>
@@ -74,13 +74,13 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 
 <div class="row r2">
   <div class="card">
-    <h3>📊 Pareto de las 6M</h3>
+    <h3>Pareto de las 6M</h3>
     <p class="hint">Reportes por categoría, con el porcentaje acumulado (regla 80/20).</p>
     <div id="c1"></div>
     <div class="insight" id="i1"></div>
   </div>
   <div class="card">
-    <h3>🎯 Frecuencia vs. Impacto</h3>
+    <h3>Frecuencia vs. Impacto</h3>
     <p class="hint">Qué tan seguido pasa, contra qué tanto afecta la seguridad.</p>
     <div id="c2"></div>
     <div class="insight" id="i2"></div>
@@ -89,20 +89,20 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 
 <div class="row r2">
   <div class="card">
-    <h3>👥 ¿Qué M reporta cada rol?</h3>
+    <h3>¿Qué M reporta cada rol?</h3>
     <p class="hint">Cada fila es un rol. Cuanto más oscura la celda, más reportes de esa M.</p>
     <div id="c3"></div>
     <div class="insight" id="i3"></div>
   </div>
   <div class="card">
-    <h3>📋 Participación por rol</h3>
+    <h3>Participación por rol</h3>
     <div id="c4"></div>
   </div>
 </div>
 
 <div class="row r1">
   <div class="card">
-    <h3>🔍 Análisis de causa raíz — Los 3 Porqués</h3>
+    <h3>Análisis de causa raíz — Los 3 Porqués</h3>
     <p class="hint">Ordenadas por prioridad (frecuencia × impacto).</p>
     <div style="max-height:360px;overflow:auto">
       <table><thead><tr>
@@ -294,7 +294,7 @@ function render(){
   const rows = filtered();
   if(!rows.length){
     kpis(rows);
-    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">📭 Aún no hay respuestas registradas.<br>Comparte el formulario con el equipo para comenzar.</div>');
+    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">Aún no hay respuestas registradas.<br>Comparte el formulario con el equipo para comenzar.</div>');
     $("tb").innerHTML = "";
     ["i1","i2","i3"].forEach(i=>$(i).innerHTML="");
     return;
