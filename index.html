@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,6 +34,8 @@ button:hover{background:rgba(255,255,255,.22)}
 .card{background:var(--card);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .card .hint{font-size:12px;color:var(--slate);margin-bottom:14px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--slate);margin-bottom:10px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:9px 10px;border-bottom:2px solid var(--line);color:var(--slate);
   font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -56,32 +58,36 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 <header>
   <div>
     <h1>E-Ishikawa Safety App</h1>
-    <p>Project Mexico — Dashboard en tiempo real, análisis Ishikawa (6M)</p>
+    <p>Project Mexico — Home Building Field Operations Safety Survey (Ishikawa 6M Analysis)</p>
   </div>
   <div class="ctrls">
-    <select id="fRol"></select>
-    <button id="btnRefresh" onclick="cargar()">Actualizar</button>
+    <select id="fRole"></select>
+    <button id="btnRefresh" onclick="cargar()">Refresh</button>
     <span class="status" id="status"></span>
   </div>
 </header>
 
 <div class="kpis">
-  <div class="kpi"><div class="lbl">Respuestas</div><div class="val" id="k1" style="color:var(--navy)">—</div><div class="sub" id="k1s"></div></div>
-  <div class="kpi"><div class="lbl">M más reportada</div><div class="val" id="k2" style="color:var(--red)">—</div><div class="sub">categoría con más señalamientos</div></div>
-  <div class="kpi"><div class="lbl">Frecuencia promedio</div><div class="val" id="k3" style="color:var(--amber)">—</div><div class="sub">1 = casi nunca · 5 = todos los días</div></div>
-  <div class="kpi"><div class="lbl">Impacto promedio</div><div class="val" id="k4" style="color:var(--green)">—</div><div class="sub">1 = poco impacto · 5 = crítico</div></div>
+  <div class="kpi"><div class="lbl">Responses</div><div class="val" id="k1" style="color:var(--navy)">—</div><div class="sub" id="k1s"></div></div>
+  <div class="kpi"><div class="lbl">Most-selected factor</div><div class="val" id="k2" style="color:var(--red)">—</div><div class="sub">initial impression (Q2)</div></div>
+  <div class="kpi"><div class="lbl">Average frequency</div><div class="val" id="k3" style="color:var(--amber)">—</div><div class="sub">1 = almost never · 5 = every day</div></div>
+  <div class="kpi"><div class="lbl">Average impact</div><div class="val" id="k4" style="color:var(--green)">—</div><div class="sub">1 = little · 5 = a lot</div></div>
 </div>
 
 <div class="row r2">
   <div class="card">
-    <h3>Pareto de las 6M</h3>
-    <p class="hint">Reportes por categoría, con el porcentaje acumulado (regla 80/20).</p>
+    <h3>Initial impression vs. root cause</h3>
+    <p class="hint">What people picked first (Q2), compared with what the Six M's they landed on after digging into root causes (Q6).</p>
+    <div class="legend">
+      <span><span class="sw" style="background:#B8C4CE"></span>Initial factor (Q2)</span>
+      <span><span class="sw" style="background:#0E9DAA"></span>Root cause(s) (Q6)</span>
+    </div>
     <div id="c1"></div>
     <div class="insight" id="i1"></div>
   </div>
   <div class="card">
-    <h3>Frecuencia vs. Impacto</h3>
-    <p class="hint">Qué tan seguido pasa, contra qué tanto afecta la seguridad.</p>
+    <h3>Perceived vs. actual consensus</h3>
+    <p class="hint">How much agreement respondents expected (Q9), versus how much they actually share on the initial factor (Q2).</p>
     <div id="c2"></div>
     <div class="insight" id="i2"></div>
   </div>
@@ -89,47 +95,49 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 
 <div class="row r2">
   <div class="card">
-    <h3>¿Qué M reporta cada rol?</h3>
-    <p class="hint">Cada fila es un rol. Cuanto más oscura la celda, más reportes de esa M.</p>
+    <h3>Root causes by role</h3>
+    <p class="hint">Each row is a role. The darker the cell, the more that role selected that M category as a root cause.</p>
     <div id="c3"></div>
     <div class="insight" id="i3"></div>
   </div>
   <div class="card">
-    <h3>Participación por rol</h3>
+    <h3>Frequency vs. impact</h3>
+    <p class="hint">How often this happens, against how much it affects safety.</p>
     <div id="c4"></div>
+    <div class="insight" id="i4"></div>
   </div>
 </div>
 
 <div class="row r1">
   <div class="card">
-    <h3>Análisis de causa raíz — Los 3 Porqués</h3>
-    <p class="hint">Ordenadas por prioridad (frecuencia × impacto).</p>
+    <h3>Root-cause analysis — in respondents' own words</h3>
+    <p class="hint">Sorted by priority (frequency × impact).</p>
     <div style="max-height:360px;overflow:auto">
       <table><thead><tr>
-        <th>Rol</th><th>M</th><th>Causa raíz (Porqué 3)</th><th>Propuesta</th><th>Frec.</th><th>Imp.</th><th>Prioridad</th>
+        <th>Role</th><th>Root M(s)</th><th>Root cause</th><th>Proposed change</th><th>Freq.</th><th>Imp.</th><th>Priority</th>
       </tr></thead><tbody id="tb"></tbody></table>
     </div>
   </div>
 </div>
 
-<footer>Datos en vivo desde Google Sheets (formulario de encuesta). Project Mexico — UABC / Cruz Roja Tijuana.</footer>
+<footer>Live data from Google Sheets (survey responses). Project Mexico — UABC / Cruz Roja Tijuana.</footer>
 </div>
 
 <script>
 const SHEET_ID = "1a4q2aUQxMYkVdUfhXe5iXs7q9gRhfyC65V6k3kTR6V8";
-const GID = "1542809256";
+const GID = "939809096";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-const M_LIST = ["Mano de obra","Maquinaria","Métodos","Materiales","Medio Ambiente","Medición"];
+const M_LIST = ["Manpower","Machinery","Methods","Materials","Environment","Measurement"];
 const M_COLOR = {
-  "Mano de obra":"#16324C", "Maquinaria":"#A3001F", "Métodos":"#0B6E78",
-  "Materiales":"#7A8794", "Medio Ambiente":"#0E9DAA", "Medición":"#5B6B7B"
+  Manpower:"#16324C", Machinery:"#A3001F", Methods:"#0B6E78",
+  Materials:"#7A8794", Environment:"#0E9DAA", Measurement:"#5B6B7B"
 };
 
 const $ = id => document.getElementById(id);
 const pct = v => (v*100).toFixed(0) + "%";
 let ALL = [];
-let filtro = "todos";
+let filtro = "all";
 
 function splitCSVLine(line){
   const out=[]; let cur="", q=false;
@@ -148,64 +156,117 @@ function parseCSV(text){
   const lines = text.split(/\r?\n/).filter(l=>l.length);
   const rows = lines.slice(1).map(splitCSVLine);
   return rows.map(c => ({
-    rol: (c[1]||"").trim() || "Sin especificar",
-    mCritica: (c[2]||"").trim(),
-    subcausas: (c[3]||"").split(",").map(s=>s.trim()).filter(Boolean),
-    porque1: (c[4]||"").trim(),
-    porque2: (c[5]||"").trim(),
-    porque3: (c[6]||"").trim(),
-    frecuencia: Number(c[7])||0,
-    impacto: Number(c[8])||0,
-    propuesta: (c[9]||"").trim()
-  })).filter(r => r.mCritica);
+    role: (c[1]||"").trim() || "Not specified",
+    initialM: (c[2]||"").split(" — ")[0].trim(),
+    specificFactor: (c[3]||"").trim(),
+    why2: (c[4]||"").trim(),
+    rootFactor: (c[5]||"").trim(),
+    rootMs: (c[6]||"").split(",").map(s=>s.trim()).filter(Boolean),
+    frequency: Number(c[7])||0,
+    impact: Number(c[8])||0,
+    consensus: c[9]!==undefined && c[9]!=="" ? Number(c[9]) : null,
+    proposal: (c[10]||"").trim()
+  })).filter(r => r.initialM);
 }
 
-function filtered(){ return filtro==="todos" ? ALL : ALL.filter(r=>r.rol===filtro); }
+function filtered(){ return filtro==="all" ? ALL : ALL.filter(r=>r.role===filtro); }
 
-function counts(rows){
+function countsInitial(rows){
   const c = {}; M_LIST.forEach(m=>c[m]=0);
-  rows.forEach(r=>{ if(c[r.mCritica]!==undefined) c[r.mCritica]++; });
+  rows.forEach(r=>{ if(c[r.initialM]!==undefined) c[r.initialM]++; });
+  return c;
+}
+function countsRoot(rows){
+  const c = {}; M_LIST.forEach(m=>c[m]=0);
+  rows.forEach(r=> r.rootMs.forEach(m=>{ if(c[m]!==undefined) c[m]++; }));
   return c;
 }
 
 function kpis(rows){
   $("k1").textContent = rows.length;
-  $("k1s").textContent = filtro==="todos" ? "de todos los roles" : filtro;
-  const c = counts(rows);
+  $("k1s").textContent = filtro==="all" ? "across all roles" : filtro;
+  const c = countsInitial(rows);
   const top = M_LIST.reduce((a,b)=>c[b]>c[a]?b:a, M_LIST[0]);
   $("k2").textContent = rows.length ? top : "—";
-  const fp = rows.length ? rows.reduce((a,r)=>a+r.frecuencia,0)/rows.length : 0;
-  const ip = rows.length ? rows.reduce((a,r)=>a+r.impacto,0)/rows.length : 0;
+  const fp = rows.length ? rows.reduce((a,r)=>a+r.frequency,0)/rows.length : 0;
+  const ip = rows.length ? rows.reduce((a,r)=>a+r.impact,0)/rows.length : 0;
   $("k3").textContent = rows.length ? fp.toFixed(1)+"/5" : "—";
   $("k4").textContent = rows.length ? ip.toFixed(1)+"/5" : "—";
 }
 
 function chart1(rows){
-  const c = counts(rows);
-  const ordered = [...M_LIST].sort((a,b)=>c[b]-c[a]);
-  const total = rows.length || 1;
-  let acc = 0;
-  const max = Math.max(...M_LIST.map(m=>c[m]), 1);
-  const W=520, rowH=40, H=ordered.length*rowH+10, labW=140, barW=W-labW-70;
+  const a = countsInitial(rows), b = countsRoot(rows);
+  const max = Math.max(...M_LIST.map(m=>Math.max(a[m],b[m])), 1);
+  const W=520, rowH=52, H=M_LIST.length*rowH+10, labW=110, barW=W-labW-46;
   let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">`;
-  ordered.forEach((m,i)=>{
+  M_LIST.forEach((m,i)=>{
     const y = i*rowH+8;
-    acc += c[m];
-    const pctAcc = acc/total*100;
-    const w = c[m]/max*barW;
-    s += `<text x="0" y="${y+15}" font-size="11.5" font-weight="600" fill="#1C2A38">${m}</text>`;
-    s += `<rect x="${labW}" y="${y+2}" width="${Math.max(w,1)}" height="18" rx="3" fill="${M_COLOR[m]}"/>`;
-    s += `<text x="${labW+Math.max(w,1)+6}" y="${y+15}" font-size="11" font-weight="700" fill="${M_COLOR[m]}">${c[m]}</text>`;
-    s += `<text x="${W}" y="${y+15}" font-size="10" fill="#7A8794" text-anchor="end">${pctAcc.toFixed(0)}% acum.</text>`;
+    s += `<text x="0" y="${y+15}" font-size="12" font-weight="600" fill="#1C2A38">${m}</text>`;
+    const w1 = a[m]/max*barW, w2 = b[m]/max*barW;
+    s += `<rect x="${labW}" y="${y+2}" width="${Math.max(w1,1)}" height="16" rx="3" fill="#B8C4CE"/>`;
+    s += `<text x="${labW+Math.max(w1,1)+6}" y="${y+15}" font-size="11" fill="#5B6B7B">${a[m]}</text>`;
+    s += `<rect x="${labW}" y="${y+22}" width="${Math.max(w2,1)}" height="16" rx="3" fill="#0E9DAA"/>`;
+    s += `<text x="${labW+Math.max(w2,1)+6}" y="${y+35}" font-size="11" font-weight="700" fill="#0B6E78">${b[m]}</text>`;
   });
   $("c1").innerHTML = s + "</svg>";
-  const top = ordered[0];
-  $("i1").innerHTML = rows.length
-    ? `<b>${top}</b> concentra ${c[top]} de ${rows.length} reportes (${pct(c[top]/total)}). Es el punto de partida más señalado por el equipo.`
-    : "Aún no hay respuestas para esta selección.";
+
+  const topA = M_LIST.reduce((x,m)=>a[m]>a[x]?m:x, M_LIST[0]);
+  const topB = M_LIST.reduce((x,m)=>b[m]>b[x]?m:x, M_LIST[0]);
+  $("i1").innerHTML = !rows.length ? "" : topA===topB
+    ? `The group's initial instinct landed on <b>${topA}</b> — and after digging into root causes, it stayed there.`
+    : `The group first pointed at <b>${topA}</b>. After tracing the why's back, the root cause shifted to <b>${topB}</b>. The problem was rarely the people — it was the system they work in.`;
 }
 
 function chart2(rows){
+  const n = rows.length;
+  const withConsensus = rows.filter(r=>r.consensus!==null);
+  const predAvg = withConsensus.length ? withConsensus.reduce((a,r)=>a+r.consensus,0)/withConsensus.length/10 : 0;
+  const c2 = countsInitial(rows);
+  const real = n ? M_LIST.reduce((a,m)=>a + Math.pow(c2[m]/n,2), 0) : 0;
+
+  const W=400, H=200;
+  const bar = (y,v,col,lab,val) =>
+    `<text x="0" y="${y-8}" font-size="11.5" fill="#5B6B7B">${lab}</text>`+
+    `<rect x="0" y="${y}" width="${W}" height="24" rx="5" fill="#EEF2F5"/>`+
+    `<rect x="0" y="${y}" width="${Math.max(v*W,3)}" height="24" rx="5" fill="${col}"/>`+
+    `<text x="${Math.max(v*W,3)+8}" y="${y+17}" font-size="14" font-weight="700" fill="${col}">${val}</text>`;
+  let s = `<svg viewBox="0 0 ${W+70} ${H}" width="100%" height="${H}">`;
+  s += bar(28, predAvg, "#B8C4CE", "Consensus respondents expected", pct(predAvg));
+  s += bar(100, real, "#1E7A3C", "Actual agreement on initial factor", pct(real));
+  $("c2").innerHTML = s + "</svg>";
+
+  const topB = M_LIST.reduce((x,m)=>c2[m]>c2[x]?m:x, M_LIST[0]);
+  if(!n){ $("i2").innerHTML = ""; }
+  else if(real > predAvg + 0.05){
+    $("i2").innerHTML = `People agree <b>${pct(real-predAvg)} more</b> than they expected — most everyone independently pointed at <b>${topB}</b>.`;
+  } else if(predAvg > real + 0.05){
+    $("i2").innerHTML = `Respondents expected more agreement than actually exists — perspectives are more varied than people assume.`;
+  } else {
+    $("i2").innerHTML = `Expected and actual consensus are close — the group has a fairly accurate read on where it stands.`;
+  }
+}
+
+function chart3(rows){
+  const roles = [...new Set(rows.map(r=>r.role))];
+  if(!roles.length){ $("c3").innerHTML = `<div class="empty">No data yet</div>`; $("i3").innerHTML=""; return; }
+  let s = `<table class="hm"><thead><tr><th></th>`;
+  M_LIST.forEach(m=>s+=`<th style="font-size:9.5px;color:#7A8794;font-weight:600">${m}</th>`);
+  s += `</tr></thead><tbody>`;
+  roles.forEach(role=>{
+    const sub = rows.filter(r=>r.role===role);
+    s += `<tr><td>${role}<div style="font-size:10px;color:#7A8794;font-weight:400">n=${sub.length}</div></td>`;
+    M_LIST.forEach(m=>{
+      const v = sub.length ? sub.filter(r=>r.rootMs.includes(m)).length/sub.length : 0;
+      const alpha = v ? 0.10 + v*0.90 : 0;
+      s += `<td><div class="cell" style="background:rgba(14,157,170,${alpha});color:${v>0.45?'#fff':'#1C2A38'}">${v?pct(v):"–"}</div></td>`;
+    });
+    s += `</tr>`;
+  });
+  $("c3").innerHTML = s + `</tbody></table>`;
+  $("i3").innerHTML = `${roles.length} distinct role(s) have responded. Compare rows to see whether perceived risk shifts by role.`;
+}
+
+function chart4(rows){
   const W=460,H=280,p=42;
   const x = v => p + (v-0.5)/4.6*(W-p-16);
   const y = v => H-p - (v-0.5)/4.6*(H-p-16);
@@ -219,84 +280,53 @@ function chart2(rows){
     s += `<text x="${x(i)}" y="${H-p+16}" font-size="10" fill="#7A8794" text-anchor="middle">${i}</text>`;
     s += `<text x="${p-8}" y="${y(i)+4}" font-size="10" fill="#7A8794" text-anchor="end">${i}</text>`;
   }
-  s += `<text x="${(W+p)/2}" y="${H-8}" font-size="11" fill="#5B6B7B" text-anchor="middle">Frecuencia →</text>`;
-  s += `<text transform="translate(12,${H/2}) rotate(-90)" font-size="11" fill="#5B6B7B" text-anchor="middle">Impacto →</text>`;
-  s += `<text x="${x(4.9)}" y="${y(5.3)}" font-size="10" font-weight="700" fill="#E63946" text-anchor="end">Atender primero</text>`;
+  s += `<text x="${(W+p)/2}" y="${H-8}" font-size="11" fill="#5B6B7B" text-anchor="middle">Frequency →</text>`;
+  s += `<text transform="translate(12,${H/2}) rotate(-90)" font-size="11" fill="#5B6B7B" text-anchor="middle">Impact →</text>`;
+  s += `<text x="${x(4.9)}" y="${y(5.3)}" font-size="10" font-weight="700" fill="#E63946" text-anchor="end">Address first</text>`;
   const cnt = {};
-  rows.forEach(r=>{ const k=r.frecuencia+"|"+r.impacto; cnt[k]=(cnt[k]||0)+1; });
+  rows.forEach(r=>{ const k=r.frequency+"|"+r.impact; cnt[k]=(cnt[k]||0)+1; });
   Object.entries(cnt).forEach(([k,n])=>{
     const [f,i] = k.split("|").map(Number);
     if(!f || !i) return;
     s += `<circle cx="${x(f)}" cy="${y(i)}" r="${7+n*3}" fill="#0E9DAA" opacity="0.55"/>`;
     if(n>1) s += `<text x="${x(f)}" y="${y(i)+4}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${n}</text>`;
   });
-  $("c2").innerHTML = s + "</svg>";
-  const crit = rows.filter(r=>r.frecuencia>=4 && r.impacto>=4).length;
-  $("i2").innerHTML = rows.length
-    ? `<b>${crit} de ${rows.length}</b> causas caen en la zona crítica (pasa seguido y afecta mucho).`
-    : "Aún no hay respuestas para esta selección.";
-}
-
-function chart3(rows){
-  const roles = [...new Set(rows.map(r=>r.rol))];
-  if(!roles.length){ $("c3").innerHTML = `<div class="empty">Sin datos aún</div>`; $("i3").innerHTML=""; return; }
-  let s = `<table class="hm"><thead><tr><th></th>`;
-  M_LIST.forEach(m=>s+=`<th style="font-size:9.5px;color:#7A8794;font-weight:600">${m}</th>`);
-  s += `</tr></thead><tbody>`;
-  roles.forEach(rol=>{
-    const sub = rows.filter(r=>r.rol===rol);
-    s += `<tr><td>${rol}<div style="font-size:10px;color:#7A8794;font-weight:400">n=${sub.length}</div></td>`;
-    M_LIST.forEach(m=>{
-      const v = sub.length ? sub.filter(r=>r.mCritica===m).length/sub.length : 0;
-      const alpha = v ? 0.10 + v*0.90 : 0;
-      s += `<td><div class="cell" style="background:rgba(14,157,170,${alpha});color:${v>0.45?'#fff':'#1C2A38'}">${v?pct(v):"–"}</div></td>`;
-    });
-    s += `</tr>`;
-  });
-  $("c3").innerHTML = s + `</tbody></table>`;
-  $("i3").innerHTML = `${roles.length} rol(es) distintos han respondido. Compara filas para ver si el riesgo percibido cambia según el rol.`;
-}
-
-function chart4(rows){
-  const roles = [...new Set(rows.map(r=>r.rol))];
-  if(!roles.length){ $("c4").innerHTML = `<div class="empty">Sin datos aún</div>`; return; }
-  const rolDf = roles.map(r=>({rol:r, n:rows.filter(x=>x.rol===r).length}))
-    .sort((a,b)=>b.n-a.n);
-  let s = `<table><thead><tr><th>Rol</th><th>Respuestas</th><th>% del total</th></tr></thead><tbody>`;
-  rolDf.forEach(r=>{
-    s += `<tr><td>${r.rol}</td><td>${r.n}</td><td>${(r.n/rows.length*100).toFixed(1)}%</td></tr>`;
-  });
-  $("c4").innerHTML = s + `</tbody></table>`;
+  $("c4").innerHTML = s + "</svg>";
+  const crit = rows.filter(r=>r.frequency>=4 && r.impact>=4).length;
+  $("i4").innerHTML = rows.length
+    ? `<b>${crit} of ${rows.length}</b> causes fall in the high-frequency, high-impact zone.`
+    : "";
 }
 
 function tabla(rows){
-  const s = [...rows].sort((a,b)=> b.frecuencia*b.impacto - a.frecuencia*a.impacto);
+  const s = [...rows].sort((a,b)=> b.frequency*b.impact - a.frequency*a.impact);
   $("tb").innerHTML = s.map(r=>{
-    const p = r.frecuencia*r.impacto;
+    const p = r.frequency*r.impact;
     const col = p>=16 ? "#E63946" : p>=9 ? "#D98200" : "#5B6B7B";
-    return `<tr><td>${r.rol}</td>
-      <td><span class="pill" style="background:${(M_COLOR[r.mCritica]||'#888')}18;color:${M_COLOR[r.mCritica]||'#888'}">${r.mCritica}</span></td>
-      <td>${r.porque3}</td>
-      <td>${r.propuesta}</td>
-      <td>${r.frecuencia}</td><td>${r.impacto}</td>
+    const chips = r.rootMs.map(m=>`<span class="pill" style="background:${(M_COLOR[m]||'#888')}18;color:${M_COLOR[m]||'#888'}">${m}</span>`).join(" ");
+    return `<tr><td>${r.role}</td>
+      <td>${chips}</td>
+      <td>${r.rootFactor}</td>
+      <td>${r.proposal}</td>
+      <td>${r.frequency}</td><td>${r.impact}</td>
       <td style="font-weight:700;color:${col}">${p}</td></tr>`;
   }).join("");
 }
 
 function initFiltro(){
-  const roles = [...new Set(ALL.map(r=>r.rol))];
-  $("fRol").innerHTML = `<option value="todos">Todos los roles</option>` +
+  const roles = [...new Set(ALL.map(r=>r.role))];
+  $("fRole").innerHTML = `<option value="all">All roles</option>` +
     roles.map(r=>`<option value="${r}">${r}</option>`).join("");
-  $("fRol").value = filtro;
+  $("fRole").value = filtro;
 }
 
 function render(){
   const rows = filtered();
   if(!rows.length){
     kpis(rows);
-    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">Aún no hay respuestas registradas.<br>Comparte el formulario con el equipo para comenzar.</div>');
+    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">No responses yet.<br>Share the survey with the team to get started.</div>');
     $("tb").innerHTML = "";
-    ["i1","i2","i3"].forEach(i=>$(i).innerHTML="");
+    ["i1","i2","i3","i4"].forEach(i=>$(i).innerHTML="");
     return;
   }
   kpis(rows);
@@ -304,20 +334,20 @@ function render(){
 }
 
 async function cargar(){
-  $("status").textContent = "Actualizando…";
+  $("status").textContent = "Refreshing…";
   try {
     const res = await fetch(CSV_URL + "&_=" + Date.now());
     const text = await res.text();
     ALL = parseCSV(text);
     initFiltro();
     render();
-    $("status").textContent = "Actualizado " + new Date().toLocaleTimeString("es-MX");
+    $("status").textContent = "Updated " + new Date().toLocaleTimeString("en-US");
   } catch(e) {
-    $("status").textContent = "Error al cargar datos";
+    $("status").textContent = "Error loading data";
   }
 }
 
-$("fRol").addEventListener("change", e=>{ filtro = e.target.value; render(); });
+$("fRole").addEventListener("change", e=>{ filtro = e.target.value; render(); });
 
 cargar();
 setInterval(cargar, 60000);
