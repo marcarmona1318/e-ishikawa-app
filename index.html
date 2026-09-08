@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Ishikawa Safety App — Project Mexico</title>
+<style>
+:root{
+  --navy:#16324C; --red:#E63946; --teal:#0E9DAA; --ink:#1C2A38;
+  --slate:#5B6B7B; --line:#DDE4EA; --bg:#F1F4F7; --card:#FFFFFF;
+  --green:#1E7A3C; --amber:#D98200;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:20px}
+.wrap{max-width:1240px;margin:0 auto}
+header{background:var(--navy);color:#fff;border-radius:12px;padding:22px 26px;margin-bottom:18px;
+  display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+header h1{font-size:24px;font-weight:700}
+header p{font-size:13px;color:#C6D3DF;margin-top:4px}
+.ctrls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;font-size:13px;padding:8px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+select option{background:var(--navy)}
+button:hover{background:rgba(255,255,255,.22)}
+.status{font-size:11.5px;color:#C6D3DF}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:14px}
+.kpi{background:var(--card);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.kpi .lbl{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--slate);margin-bottom:6px}
+.kpi .val{font-size:32px;font-weight:700;line-height:1.05}
+.kpi .sub{font-size:12px;color:var(--slate);margin-top:6px}
+.row{display:grid;gap:14px;margin-bottom:14px}
+.r2{grid-template-columns:1.15fr .85fr}
+.r1{grid-template-columns:1fr}
+.card{background:var(--card);border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.card .hint{font-size:12px;color:var(--slate);margin-bottom:14px;font-style:italic}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 10px;border-bottom:2px solid var(--line);color:var(--slate);
+  font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:9px 10px;border-bottom:1px solid #F0F3F5}
+tbody tr:hover{background:#F7F9FB}
+.hm td,.hm th{text-align:center;font-size:12px;padding:8px 4px;border:none}
+.hm td:first-child,.hm th:first-child{text-align:left;font-weight:600;color:var(--ink);white-space:nowrap}
+.cell{border-radius:6px;padding:9px 0;font-weight:600}
+.insight{background:#EAF6F7;border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink);margin-top:14px}
+.insight b{color:var(--teal)}
+.pill{display:inline-block;background:#EEF2F5;border-radius:20px;padding:3px 10px;font-size:11px;color:var(--slate)}
+.empty{height:220px;display:flex;align-items:center;justify-content:center;color:#B8C4CE;font-size:13px;text-align:center}
+footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
+@media(max-width:900px){.r2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>🦺 E-Ishikawa Safety App</h1>
+    <p>Project Mexico — Dashboard en tiempo real, análisis Ishikawa (6M)</p>
+  </div>
+  <div class="ctrls">
+    <select id="fRol"></select>
+    <button id="btnRefresh" onclick="cargar()">🔄 Actualizar</button>
+    <span class="status" id="status"></span>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="lbl">Respuestas</div><div class="val" id="k1" style="color:var(--navy)">—</div><div class="sub" id="k1s"></div></div>
+  <div class="kpi"><div class="lbl">M más reportada</div><div class="val" id="k2" style="color:var(--red)">—</div><div class="sub">categoría con más señalamientos</div></div>
+  <div class="kpi"><div class="lbl">Frecuencia promedio</div><div class="val" id="k3" style="color:var(--amber)">—</div><div class="sub">1 = casi nunca · 5 = todos los días</div></div>
+  <div class="kpi"><div class="lbl">Impacto promedio</div><div class="val" id="k4" style="color:var(--green)">—</div><div class="sub">1 = poco impacto · 5 = crítico</div></div>
+</div>
+
+<div class="row r2">
+  <div class="card">
+    <h3>📊 Pareto de las 6M</h3>
+    <p class="hint">Reportes por categoría, con el porcentaje acumulado (regla 80/20).</p>
+    <div id="c1"></div>
+    <div class="insight" id="i1"></div>
+  </div>
+  <div class="card">
+    <h3>🎯 Frecuencia vs. Impacto</h3>
+    <p class="hint">Qué tan seguido pasa, contra qué tanto afecta la seguridad.</p>
+    <div id="c2"></div>
+    <div class="insight" id="i2"></div>
+  </div>
+</div>
+
+<div class="row r2">
+  <div class="card">
+    <h3>👥 ¿Qué M reporta cada rol?</h3>
+    <p class="hint">Cada fila es un rol. Cuanto más oscura la celda, más reportes de esa M.</p>
+    <div id="c3"></div>
+    <div class="insight" id="i3"></div>
+  </div>
+  <div class="card">
+    <h3>📋 Participación por rol</h3>
+    <div id="c4"></div>
+  </div>
+</div>
+
+<div class="row r1">
+  <div class="card">
+    <h3>🔍 Análisis de causa raíz — Los 3 Porqués</h3>
+    <p class="hint">Ordenadas por prioridad (frecuencia × impacto).</p>
+    <div style="max-height:360px;overflow:auto">
+      <table><thead><tr>
+        <th>Rol</th><th>M</th><th>Causa raíz (Porqué 3)</th><th>Propuesta</th><th>Frec.</th><th>Imp.</th><th>Prioridad</th>
+      </tr></thead><tbody id="tb"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<footer>Datos en vivo desde Google Sheets (formulario de encuesta). Project Mexico — UABC / Cruz Roja Tijuana.</footer>
+</div>
+
+<script>
+const SHEET_ID = "1a4q2aUQxMYkVdUfhXe5iXs7q9gRhfyC65V6k3kTR6V8";
+const GID = "1542809256";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+
+const M_LIST = ["Mano de obra","Maquinaria","Métodos","Materiales","Medio Ambiente","Medición"];
+const M_COLOR = {
+  "Mano de obra":"#16324C", "Maquinaria":"#A3001F", "Métodos":"#0B6E78",
+  "Materiales":"#7A8794", "Medio Ambiente":"#0E9DAA", "Medición":"#5B6B7B"
+};
+
+const $ = id => document.getElementById(id);
+const pct = v => (v*100).toFixed(0) + "%";
+let ALL = [];
+let filtro = "todos";
+
+function splitCSVLine(line){
+  const out=[]; let cur="", q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch === '"'){
+      if(q && line[i+1]==='"'){ cur+='"'; i++; }
+      else q = !q;
+    } else if(ch === ',' && !q){ out.push(cur); cur=""; }
+    else cur += ch;
+  }
+  out.push(cur); return out;
+}
+
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.length);
+  const rows = lines.slice(1).map(splitCSVLine);
+  return rows.map(c => ({
+    rol: (c[1]||"").trim() || "Sin especificar",
+    mCritica: (c[2]||"").trim(),
+    subcausas: (c[3]||"").split(",").map(s=>s.trim()).filter(Boolean),
+    porque1: (c[4]||"").trim(),
+    porque2: (c[5]||"").trim(),
+    porque3: (c[6]||"").trim(),
+    frecuencia: Number(c[7])||0,
+    impacto: Number(c[8])||0,
+    propuesta: (c[9]||"").trim()
+  })).filter(r => r.mCritica);
+}
+
+function filtered(){ return filtro==="todos" ? ALL : ALL.filter(r=>r.rol===filtro); }
+
+function counts(rows){
+  const c = {}; M_LIST.forEach(m=>c[m]=0);
+  rows.forEach(r=>{ if(c[r.mCritica]!==undefined) c[r.mCritica]++; });
+  return c;
+}
+
+function kpis(rows){
+  $("k1").textContent = rows.length;
+  $("k1s").textContent = filtro==="todos" ? "de todos los roles" : filtro;
+  const c = counts(rows);
+  const top = M_LIST.reduce((a,b)=>c[b]>c[a]?b:a, M_LIST[0]);
+  $("k2").textContent = rows.length ? top : "—";
+  const fp = rows.length ? rows.reduce((a,r)=>a+r.frecuencia,0)/rows.length : 0;
+  const ip = rows.length ? rows.reduce((a,r)=>a+r.impacto,0)/rows.length : 0;
+  $("k3").textContent = rows.length ? fp.toFixed(1)+"/5" : "—";
+  $("k4").textContent = rows.length ? ip.toFixed(1)+"/5" : "—";
+}
+
+function chart1(rows){
+  const c = counts(rows);
+  const ordered = [...M_LIST].sort((a,b)=>c[b]-c[a]);
+  const total = rows.length || 1;
+  let acc = 0;
+  const max = Math.max(...M_LIST.map(m=>c[m]), 1);
+  const W=520, rowH=40, H=ordered.length*rowH+10, labW=140, barW=W-labW-70;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">`;
+  ordered.forEach((m,i)=>{
+    const y = i*rowH+8;
+    acc += c[m];
+    const pctAcc = acc/total*100;
+    const w = c[m]/max*barW;
+    s += `<text x="0" y="${y+15}" font-size="11.5" font-weight="600" fill="#1C2A38">${m}</text>`;
+    s += `<rect x="${labW}" y="${y+2}" width="${Math.max(w,1)}" height="18" rx="3" fill="${M_COLOR[m]}"/>`;
+    s += `<text x="${labW+Math.max(w,1)+6}" y="${y+15}" font-size="11" font-weight="700" fill="${M_COLOR[m]}">${c[m]}</text>`;
+    s += `<text x="${W}" y="${y+15}" font-size="10" fill="#7A8794" text-anchor="end">${pctAcc.toFixed(0)}% acum.</text>`;
+  });
+  $("c1").innerHTML = s + "</svg>";
+  const top = ordered[0];
+  $("i1").innerHTML = rows.length
+    ? `<b>${top}</b> concentra ${c[top]} de ${rows.length} reportes (${pct(c[top]/total)}). Es el punto de partida más señalado por el equipo.`
+    : "Aún no hay respuestas para esta selección.";
+}
+
+function chart2(rows){
+  const W=460,H=280,p=42;
+  const x = v => p + (v-0.5)/4.6*(W-p-16);
+  const y = v => H-p - (v-0.5)/4.6*(H-p-16);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">`;
+  s += `<rect x="${x(3)}" y="${y(5.4)}" width="${x(5.4)-x(3)}" height="${y(3)-y(5.4)}" fill="#E63946" opacity="0.06"/>`;
+  s += `<line x1="${x(3)}" y1="${y(0.5)}" x2="${x(3)}" y2="${y(5.4)}" stroke="#DDE4EA" stroke-dasharray="3 3"/>`;
+  s += `<line x1="${x(0.5)}" y1="${y(3)}" x2="${x(5.4)}" y2="${y(3)}" stroke="#DDE4EA" stroke-dasharray="3 3"/>`;
+  s += `<line x1="${p}" y1="${H-p}" x2="${W-10}" y2="${H-p}" stroke="#B8C4CE"/>`;
+  s += `<line x1="${p}" y1="14" x2="${p}" y2="${H-p}" stroke="#B8C4CE"/>`;
+  for(let i=1;i<=5;i++){
+    s += `<text x="${x(i)}" y="${H-p+16}" font-size="10" fill="#7A8794" text-anchor="middle">${i}</text>`;
+    s += `<text x="${p-8}" y="${y(i)+4}" font-size="10" fill="#7A8794" text-anchor="end">${i}</text>`;
+  }
+  s += `<text x="${(W+p)/2}" y="${H-8}" font-size="11" fill="#5B6B7B" text-anchor="middle">Frecuencia →</text>`;
+  s += `<text transform="translate(12,${H/2}) rotate(-90)" font-size="11" fill="#5B6B7B" text-anchor="middle">Impacto →</text>`;
+  s += `<text x="${x(4.9)}" y="${y(5.3)}" font-size="10" font-weight="700" fill="#E63946" text-anchor="end">Atender primero</text>`;
+  const cnt = {};
+  rows.forEach(r=>{ const k=r.frecuencia+"|"+r.impacto; cnt[k]=(cnt[k]||0)+1; });
+  Object.entries(cnt).forEach(([k,n])=>{
+    const [f,i] = k.split("|").map(Number);
+    if(!f || !i) return;
+    s += `<circle cx="${x(f)}" cy="${y(i)}" r="${7+n*3}" fill="#0E9DAA" opacity="0.55"/>`;
+    if(n>1) s += `<text x="${x(f)}" y="${y(i)+4}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${n}</text>`;
+  });
+  $("c2").innerHTML = s + "</svg>";
+  const crit = rows.filter(r=>r.frecuencia>=4 && r.impacto>=4).length;
+  $("i2").innerHTML = rows.length
+    ? `<b>${crit} de ${rows.length}</b> causas caen en la zona crítica (pasa seguido y afecta mucho).`
+    : "Aún no hay respuestas para esta selección.";
+}
+
+function chart3(rows){
+  const roles = [...new Set(rows.map(r=>r.rol))];
+  if(!roles.length){ $("c3").innerHTML = `<div class="empty">Sin datos aún</div>`; $("i3").innerHTML=""; return; }
+  let s = `<table class="hm"><thead><tr><th></th>`;
+  M_LIST.forEach(m=>s+=`<th style="font-size:9.5px;color:#7A8794;font-weight:600">${m}</th>`);
+  s += `</tr></thead><tbody>`;
+  roles.forEach(rol=>{
+    const sub = rows.filter(r=>r.rol===rol);
+    s += `<tr><td>${rol}<div style="font-size:10px;color:#7A8794;font-weight:400">n=${sub.length}</div></td>`;
+    M_LIST.forEach(m=>{
+      const v = sub.length ? sub.filter(r=>r.mCritica===m).length/sub.length : 0;
+      const alpha = v ? 0.10 + v*0.90 : 0;
+      s += `<td><div class="cell" style="background:rgba(14,157,170,${alpha});color:${v>0.45?'#fff':'#1C2A38'}">${v?pct(v):"–"}</div></td>`;
+    });
+    s += `</tr>`;
+  });
+  $("c3").innerHTML = s + `</tbody></table>`;
+  $("i3").innerHTML = `${roles.length} rol(es) distintos han respondido. Compara filas para ver si el riesgo percibido cambia según el rol.`;
+}
+
+function chart4(rows){
+  const roles = [...new Set(rows.map(r=>r.rol))];
+  if(!roles.length){ $("c4").innerHTML = `<div class="empty">Sin datos aún</div>`; return; }
+  const rolDf = roles.map(r=>({rol:r, n:rows.filter(x=>x.rol===r).length}))
+    .sort((a,b)=>b.n-a.n);
+  let s = `<table><thead><tr><th>Rol</th><th>Respuestas</th><th>% del total</th></tr></thead><tbody>`;
+  rolDf.forEach(r=>{
+    s += `<tr><td>${r.rol}</td><td>${r.n}</td><td>${(r.n/rows.length*100).toFixed(1)}%</td></tr>`;
+  });
+  $("c4").innerHTML = s + `</tbody></table>`;
+}
+
+function tabla(rows){
+  const s = [...rows].sort((a,b)=> b.frecuencia*b.impacto - a.frecuencia*a.impacto);
+  $("tb").innerHTML = s.map(r=>{
+    const p = r.frecuencia*r.impacto;
+    const col = p>=16 ? "#E63946" : p>=9 ? "#D98200" : "#5B6B7B";
+    return `<tr><td>${r.rol}</td>
+      <td><span class="pill" style="background:${(M_COLOR[r.mCritica]||'#888')}18;color:${M_COLOR[r.mCritica]||'#888'}">${r.mCritica}</span></td>
+      <td>${r.porque3}</td>
+      <td>${r.propuesta}</td>
+      <td>${r.frecuencia}</td><td>${r.impacto}</td>
+      <td style="font-weight:700;color:${col}">${p}</td></tr>`;
+  }).join("");
+}
+
+function initFiltro(){
+  const roles = [...new Set(ALL.map(r=>r.rol))];
+  $("fRol").innerHTML = `<option value="todos">Todos los roles</option>` +
+    roles.map(r=>`<option value="${r}">${r}</option>`).join("");
+  $("fRol").value = filtro;
+}
+
+function render(){
+  const rows = filtered();
+  if(!rows.length){
+    kpis(rows);
+    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">📭 Aún no hay respuestas registradas.<br>Comparte el formulario con el equipo para comenzar.</div>');
+    $("tb").innerHTML = "";
+    ["i1","i2","i3"].forEach(i=>$(i).innerHTML="");
+    return;
+  }
+  kpis(rows);
+  chart1(rows); chart2(rows); chart3(rows); chart4(rows); tabla(rows);
+}
+
+async function cargar(){
+  $("status").textContent = "Actualizando…";
+  try {
+    const res = await fetch(CSV_URL + "&_=" + Date.now());
+    const text = await res.text();
+    ALL = parseCSV(text);
+    initFiltro();
+    render();
+    $("status").textContent = "Actualizado " + new Date().toLocaleTimeString("es-MX");
+  } catch(e) {
+    $("status").textContent = "Error al cargar datos";
+  }
+}
+
+$("fRol").addEventListener("change", e=>{ filtro = e.target.value; render(); });
+
+cargar();
+setInterval(cargar, 60000);
+</script>
+</body>
+</html>
