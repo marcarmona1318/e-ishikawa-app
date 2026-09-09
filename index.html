@@ -77,17 +77,17 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 <div class="row r2">
   <div class="card">
     <h3>Initial impression vs. root cause</h3>
-    <p class="hint">What people picked first (Q2), compared with what the Six M's they landed on after digging into root causes (Q6).</p>
+    <p class="hint">What people picked first (Q2), compared with where the Six M analysis led them after tracing root causes (Q5).</p>
     <div class="legend">
       <span><span class="sw" style="background:#B8C4CE"></span>Initial factor (Q2)</span>
-      <span><span class="sw" style="background:#0E9DAA"></span>Root cause(s) (Q6)</span>
+      <span><span class="sw" style="background:#0E9DAA"></span>Root cause (Q5)</span>
     </div>
     <div id="c1"></div>
     <div class="insight" id="i1"></div>
   </div>
   <div class="card">
     <h3>Perceived vs. actual consensus</h3>
-    <p class="hint">How much agreement respondents expected (Q9), versus how much they actually share on the initial factor (Q2).</p>
+    <p class="hint">How much agreement respondents expected (Q8), versus how much they actually share on the initial factor (Q2).</p>
     <div id="c2"></div>
     <div class="insight" id="i2"></div>
   </div>
@@ -96,7 +96,7 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 <div class="row r2">
   <div class="card">
     <h3>Root causes by role</h3>
-    <p class="hint">Each row is a role. The darker the cell, the more that role selected that M category as a root cause.</p>
+    <p class="hint">Each row is a role. The darker the cell, the more that role's root cause (Q5) landed on that M category.</p>
     <div id="c3"></div>
     <div class="insight" id="i3"></div>
   </div>
@@ -110,11 +110,20 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 
 <div class="row r1">
   <div class="card">
+    <h3>Most cited specific subcauses</h3>
+    <p class="hint">The individual checkboxes selected most often, across all six M categories, colored by their M.</p>
+    <div id="c5"></div>
+    <div class="insight" id="i5"></div>
+  </div>
+</div>
+
+<div class="row r1">
+  <div class="card">
     <h3>Root-cause analysis — in respondents' own words</h3>
     <p class="hint">Sorted by priority (frequency × impact).</p>
     <div style="max-height:360px;overflow:auto">
       <table><thead><tr>
-        <th>Role</th><th>Root M(s)</th><th>Root cause</th><th>Proposed change</th><th>Freq.</th><th>Imp.</th><th>Priority</th>
+        <th>Role</th><th>Root M</th><th>Root cause</th><th>Proposed change</th><th>Freq.</th><th>Imp.</th><th>Priority</th>
       </tr></thead><tbody id="tb"></tbody></table>
     </div>
   </div>
@@ -124,8 +133,8 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 </div>
 
 <script>
-const SHEET_ID = "1a4q2aUQxMYkVdUfhXe5iXs7q9gRhfyC65V6k3kTR6V8";
-const GID = "939809096";
+const SHEET_ID = "1BgfkgCpZ7TJtCT18dX8pCMT13UwNlgTspBdxSdcXxwY";
+const GID = "1924805980";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
 const M_LIST = ["Manpower","Machinery","Methods","Materials","Environment","Measurement"];
@@ -133,9 +142,12 @@ const M_COLOR = {
   Manpower:"#16324C", Machinery:"#A3001F", Methods:"#0B6E78",
   Materials:"#7A8794", Environment:"#0E9DAA", Measurement:"#5B6B7B"
 };
+// Column indices in the response sheet, matching the current form's question order.
+const SUBCAUSE_COL = { Manpower:3, Machinery:4, Methods:5, Materials:6, Environment:7, Measurement:8 };
 
 const $ = id => document.getElementById(id);
 const pct = v => (v*100).toFixed(0) + "%";
+const trunc = (s,n) => s.length>n ? s.slice(0,n-1)+"…" : s;
 let ALL = [];
 let filtro = "all";
 
@@ -152,21 +164,34 @@ function splitCSVLine(line){
   out.push(cur); return out;
 }
 
+function normM(s){
+  const hit = M_LIST.find(m => m.toUpperCase() === s.trim().toUpperCase());
+  return hit || s.trim();
+}
+
 function parseCSV(text){
   const lines = text.split(/\r?\n/).filter(l=>l.length);
   const rows = lines.slice(1).map(splitCSVLine);
-  return rows.map(c => ({
-    role: (c[1]||"").trim() || "Not specified",
-    initialM: (c[2]||"").split(" — ")[0].trim(),
-    specificFactor: (c[3]||"").trim(),
-    why2: (c[4]||"").trim(),
-    rootFactor: (c[5]||"").trim(),
-    rootMs: (c[6]||"").split(",").map(s=>s.trim()).filter(Boolean),
-    frequency: Number(c[7])||0,
-    impact: Number(c[8])||0,
-    consensus: c[9]!==undefined && c[9]!=="" ? Number(c[9]) : null,
-    proposal: (c[10]||"").trim()
-  })).filter(r => r.initialM);
+  return rows.map(c => {
+    let subcauses = [], subcauseM = "";
+    M_LIST.forEach(m=>{
+      const v = (c[SUBCAUSE_COL[m]]||"").trim();
+      if(v){ subcauses = v.split(",").map(s=>s.trim()).filter(Boolean); subcauseM = m; }
+    });
+    return {
+      role: (c[1]||"").trim() || "Not specified",
+      initialM: normM((c[2]||"").split(" — ")[0]),
+      subcauseM,
+      subcauses,
+      why: (c[9]||"").trim(),
+      underlyingFactor: (c[10]||"").trim(),
+      rootM: normM((c[11]||"").split(" — ")[0]),
+      frequency: Number(c[12])||0,
+      impact: Number(c[13])||0,
+      consensus: c[14]!==undefined && c[14]!=="" ? Number(c[14]) : null,
+      proposal: (c[15]||"").trim()
+    };
+  }).filter(r => r.initialM);
 }
 
 function filtered(){ return filtro==="all" ? ALL : ALL.filter(r=>r.role===filtro); }
@@ -178,7 +203,7 @@ function countsInitial(rows){
 }
 function countsRoot(rows){
   const c = {}; M_LIST.forEach(m=>c[m]=0);
-  rows.forEach(r=> r.rootMs.forEach(m=>{ if(c[m]!==undefined) c[m]++; }));
+  rows.forEach(r=>{ if(c[r.rootM]!==undefined) c[r.rootM]++; });
   return c;
 }
 
@@ -256,14 +281,14 @@ function chart3(rows){
     const sub = rows.filter(r=>r.role===role);
     s += `<tr><td>${role}<div style="font-size:10px;color:#7A8794;font-weight:400">n=${sub.length}</div></td>`;
     M_LIST.forEach(m=>{
-      const v = sub.length ? sub.filter(r=>r.rootMs.includes(m)).length/sub.length : 0;
+      const v = sub.length ? sub.filter(r=>r.rootM===m).length/sub.length : 0;
       const alpha = v ? 0.10 + v*0.90 : 0;
       s += `<td><div class="cell" style="background:rgba(14,157,170,${alpha});color:${v>0.45?'#fff':'#1C2A38'}">${v?pct(v):"–"}</div></td>`;
     });
     s += `</tr>`;
   });
   $("c3").innerHTML = s + `</tbody></table>`;
-  $("i3").innerHTML = `${roles.length} distinct role(s) have responded. Compare rows to see whether perceived risk shifts by role.`;
+  $("i3").innerHTML = `${roles.length} distinct role(s) have responded. Compare rows to see whether the root-cause pattern shifts by role.`;
 }
 
 function chart4(rows){
@@ -298,15 +323,41 @@ function chart4(rows){
     : "";
 }
 
+function chart5(rows){
+  const counts = {};
+  rows.forEach(r => r.subcauses.forEach(sc=>{
+    if(!counts[sc]) counts[sc] = { count:0, m:r.subcauseM };
+    counts[sc].count++;
+  }));
+  const arr = Object.entries(counts)
+    .map(([text,v])=>({text, ...v}))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,10);
+  if(!arr.length){ $("c5").innerHTML = `<div class="empty">No data yet</div>`; $("i5").innerHTML=""; return; }
+  const max = Math.max(...arr.map(a=>a.count),1);
+  const rowH=30, W=640, labW=260, barW=W-labW-46, H=arr.length*rowH+8;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">`;
+  arr.forEach((a,i)=>{
+    const y = i*rowH+6;
+    const w = a.count/max*barW;
+    const col = M_COLOR[a.m] || "#888";
+    s += `<text x="0" y="${y+13}" font-size="11.5" fill="#1C2A38">${trunc(a.text,38)}</text>`;
+    s += `<rect x="${labW}" y="${y+2}" width="${Math.max(w,2)}" height="15" rx="3" fill="${col}"/>`;
+    s += `<text x="${labW+Math.max(w,2)+6}" y="${y+13}" font-size="11" font-weight="700" fill="${col}">${a.count} · ${a.m}</text>`;
+  });
+  $("c5").innerHTML = s + "</svg>";
+  $("i5").innerHTML = `Most cited: <b>${arr[0].text}</b> (${arr[0].m}), selected ${arr[0].count} time(s).`;
+}
+
 function tabla(rows){
   const s = [...rows].sort((a,b)=> b.frequency*b.impact - a.frequency*a.impact);
   $("tb").innerHTML = s.map(r=>{
     const p = r.frequency*r.impact;
     const col = p>=16 ? "#E63946" : p>=9 ? "#D98200" : "#5B6B7B";
-    const chips = r.rootMs.map(m=>`<span class="pill" style="background:${(M_COLOR[m]||'#888')}18;color:${M_COLOR[m]||'#888'}">${m}</span>`).join(" ");
+    const chip = r.rootM ? `<span class="pill" style="background:${(M_COLOR[r.rootM]||'#888')}18;color:${M_COLOR[r.rootM]||'#888'}">${r.rootM}</span>` : "";
     return `<tr><td>${r.role}</td>
-      <td>${chips}</td>
-      <td>${r.rootFactor}</td>
+      <td>${chip}</td>
+      <td>${r.underlyingFactor}</td>
       <td>${r.proposal}</td>
       <td>${r.frequency}</td><td>${r.impact}</td>
       <td style="font-weight:700;color:${col}">${p}</td></tr>`;
@@ -324,13 +375,13 @@ function render(){
   const rows = filtered();
   if(!rows.length){
     kpis(rows);
-    ["c1","c2","c3","c4"].forEach(c=>$(c).innerHTML='<div class="empty">No responses yet.<br>Share the survey with the team to get started.</div>');
+    ["c1","c2","c3","c4","c5"].forEach(c=>$(c).innerHTML='<div class="empty">No responses yet.<br>Share the survey with the team to get started.</div>');
     $("tb").innerHTML = "";
-    ["i1","i2","i3","i4"].forEach(i=>$(i).innerHTML="");
+    ["i1","i2","i3","i4","i5"].forEach(i=>$(i).innerHTML="");
     return;
   }
   kpis(rows);
-  chart1(rows); chart2(rows); chart3(rows); chart4(rows); tabla(rows);
+  chart1(rows); chart2(rows); chart3(rows); chart4(rows); chart5(rows); tabla(rows);
 }
 
 async function cargar(){
