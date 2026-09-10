@@ -111,7 +111,7 @@ footer{text-align:center;font-size:11.5px;color:var(--slate);padding:16px 0}
 <div class="row r1">
   <div class="card">
     <h3>Most cited specific subcauses</h3>
-    <p class="hint">The individual checkboxes selected most often, across all six M categories, colored by their M.</p>
+    <p class="hint">The individual checkboxes selected most often — both when picking the initial factor (Q2's submenu) and when confirming the root cause (Q5's submenu) — colored by their M.</p>
     <div id="c5"></div>
     <div class="insight" id="i5"></div>
   </div>
@@ -144,6 +144,8 @@ const M_COLOR = {
 };
 // Column indices in the response sheet, matching the current form's question order.
 const SUBCAUSE_COL = { Manpower:3, Machinery:4, Methods:5, Materials:6, Environment:7, Measurement:8 };
+// Q5 opens its own subcause submenu per M, appended as new columns after Q9.
+const ROOT_SUBCAUSE_COL = { Manpower:16, Machinery:17, Methods:18, Materials:19, Environment:20, Measurement:21 };
 
 const $ = id => document.getElementById(id);
 const pct = v => (v*100).toFixed(0) + "%";
@@ -178,6 +180,11 @@ function parseCSV(text){
       const v = (c[SUBCAUSE_COL[m]]||"").trim();
       if(v){ subcauses = v.split(",").map(s=>s.trim()).filter(Boolean); subcauseM = m; }
     });
+    let rootSubcauses = [], rootSubcauseM = "";
+    M_LIST.forEach(m=>{
+      const v = (c[ROOT_SUBCAUSE_COL[m]]||"").trim();
+      if(v){ rootSubcauses = v.split(",").map(s=>s.trim()).filter(Boolean); rootSubcauseM = m; }
+    });
     return {
       role: (c[1]||"").trim() || "Not specified",
       initialM: normM((c[2]||"").split(" — ")[0]),
@@ -186,6 +193,8 @@ function parseCSV(text){
       why: (c[9]||"").trim(),
       underlyingFactor: (c[10]||"").trim(),
       rootM: normM((c[11]||"").split(" — ")[0]),
+      rootSubcauseM,
+      rootSubcauses,
       frequency: Number(c[12])||0,
       impact: Number(c[13])||0,
       consensus: c[14]!==undefined && c[14]!=="" ? Number(c[14]) : null,
@@ -325,10 +334,16 @@ function chart4(rows){
 
 function chart5(rows){
   const counts = {};
-  rows.forEach(r => r.subcauses.forEach(sc=>{
-    if(!counts[sc]) counts[sc] = { count:0, m:r.subcauseM };
-    counts[sc].count++;
-  }));
+  rows.forEach(r => {
+    r.subcauses.forEach(sc=>{
+      if(!counts[sc]) counts[sc] = { count:0, m:r.subcauseM };
+      counts[sc].count++;
+    });
+    r.rootSubcauses.forEach(sc=>{
+      if(!counts[sc]) counts[sc] = { count:0, m:r.rootSubcauseM };
+      counts[sc].count++;
+    });
+  });
   const arr = Object.entries(counts)
     .map(([text,v])=>({text, ...v}))
     .sort((a,b)=>b.count-a.count)
