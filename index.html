@@ -153,17 +153,27 @@ const trunc = (s,n) => s.length>n ? s.slice(0,n-1)+"…" : s;
 let ALL = [];
 let filtro = "all";
 
-function splitCSVLine(line){
-  const out=[]; let cur="", q=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch === '"'){
-      if(q && line[i+1]==='"'){ cur+='"'; i++; }
-      else q = !q;
-    } else if(ch === ',' && !q){ out.push(cur); cur=""; }
-    else cur += ch;
+// Full CSV parse (not line-split first): free-text answers can contain literal
+// line breaks, and splitting on \n before honoring quotes would shred one
+// response into several bogus rows.
+function parseCSVRows(text){
+  const rows = []; let row=[]; let cur=""; let q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){
+      if(ch === '"'){
+        if(text[i+1]==='"'){ cur+='"'; i++; } else q=false;
+      } else cur += ch;
+    } else {
+      if(ch === '"') q=true;
+      else if(ch === ','){ row.push(cur); cur=""; }
+      else if(ch === '\r'){ /* skip */ }
+      else if(ch === '\n'){ row.push(cur); cur=""; rows.push(row); row=[]; }
+      else cur += ch;
+    }
   }
-  out.push(cur); return out;
+  if(cur.length || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.length>1 || r[0]!=="");
 }
 
 function normM(s){
@@ -172,8 +182,7 @@ function normM(s){
 }
 
 function parseCSV(text){
-  const lines = text.split(/\r?\n/).filter(l=>l.length);
-  const rows = lines.slice(1).map(splitCSVLine);
+  const rows = parseCSVRows(text).slice(1);
   return rows.map(c => {
     let subcauses = [], subcauseM = "";
     M_LIST.forEach(m=>{
